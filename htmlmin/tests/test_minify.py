@@ -4,11 +4,15 @@
 # Use of this source code is governed by a BSD-style
 # license that can be found in the LICENSE file.
 
+from __future__ import unicode_literals
+
 import codecs
 import unittest
+from os.path import abspath, dirname, join
+
+import six
 
 from htmlmin.minify import html_minify
-from os.path import abspath, dirname, join
 
 resources_path = lambda *paths: abspath(join(dirname(__file__),
                                              'resources', *paths))
@@ -78,7 +82,10 @@ class TestMinify(unittest.TestCase):
     def test_minify_function_should_return_a_unicode_object(self):
         html = "<html>   <body>some text here</body>    </html>"
         minified = html_minify(html)
-        self.assertEqual(unicode, type(minified))
+        if six.PY2:
+            self.assertEqual(unicode, type(minified))
+        else:
+            self.assertEqual(str, type(minified))
 
     def test_minify_should_respect_encoding(self):
         html, minified = self._normal_and_minified('blogpost')
@@ -152,7 +159,7 @@ class TestMinify(unittest.TestCase):
 
     def test_should_keep_non_breaking_space(self):
         html = '<html><head></head><body>This is seperated&nbsp;by a non breaking space.</body></html>'
-        minified = u'<html><head></head><body>This is seperated\xa0by a non breaking space.</body></html>'
+        minified = '<html><head></head><body>This is seperated\xa0by a non breaking space.</body></html>'
         got_html = html_minify(html)
         self.assertEqual(minified, got_html)
 
@@ -165,4 +172,3 @@ class TestMinify(unittest.TestCase):
             'non_ascii_in_excluded_element'
         )
         self.assertEqual(minified, html_minify(html))
-
